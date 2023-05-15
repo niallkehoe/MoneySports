@@ -59,7 +59,7 @@ for (i in 1:nrow(bBall)) {
 #for (i in 1:5) {
   # we want 1 for the home team, -1 for the away, so we'll use the Away column which tells us if the winner was Away or not
   bt_mat[i,bBall$Home.Neutral[i]] = 1
-  bt_mat[i,bBall$Visitor.Neutral[i]]  = -1
+  bt_mat[i,bBall$Visitor.Neutral[i]] = -1
   
 }
 
@@ -67,11 +67,12 @@ for (i in 1:nrow(bBall)) {
 bt_mat[,'HFA'] = 1
 
 # we should multiply the point diff by -1 if the winning team was away
-bt_mat[,'Pt_Diff'] = abs(bBall$PTS - bBall$PTS.1) # equivelant??? 
+bt_mat[,'Pt_Diff'] = bBall$PTS - bBall$PTS.1 # equivelant??? 
 
 # if you want to do the unregularized models, create a dataframe
 
 head(bt_mat)
+View(bt_mat)
 ```
 
 ## 2.2
@@ -211,114 +212,3 @@ The normal model outperformed the normal model on predicting the bowl results in
 In either model you fit, what are some model assumptions that you find problematic that might lead to shortcomings in the results? [\textbf{2 points}]
 
 Shortcomings: styles of play affecting which teams beat which, injuries affecting performance, small number of games in training set, trading of players mid season.
-
-# Problem 3: Elo Ratings
-
-In this problem you will practice the task of updating Elo ratins based on game results, in the process analyzing the properties of the model. In this problem we will reference an existing {\color{blue}\href{http://tennisabstract.com/reports/wta_elo_ratings.html}{Elo system}} for the WTA tour. If you'd like you can look at {\color{blue}\href{https://github.com/sleepomeno/tennis_atp/blob/master/examples/elo.R}{the code}} actually used for the Elo algorithm, which is the same as our model but has a different value of $K$ based on each player's number of games played.
-
-## 3.1
-
-As of the time of writing, Iga Swiatek, Aryna Sabalenka, and Coco Gauff are ranked 1, 3, and 9 respectively in the Elo, with respective ratings of 2199, 2088, and 1982. For tennis we'll assume that the update algorithm uses update function $$\Upsilon(R_i-R_j)=K\cdot\frac{1}{1+e^{(R_i-R_j)/{s}}},$$ where $K=40$ and $s=174$. Suppose the three play a round robin, with (in order) Swiatek beating Sabalenka, Sabalenka beating Gauff, and Gauff beating Swiatek. What will the new Elo ratings of each player be after this round robin? Feel free to do all this manually or write a function in R to update ratings. Details on the Elo model [\textbf{4 points}]
-
-$$\Upsilon(R_i-R_j)=\frac{40}{1+e^{(R_i-R_j)/{174}}},$$
-
-Swiatek = 2199, Sabalenka = 2088, Gauff = 1982
-
-Here are the general steps involved in updating Elo rankings:
-
-1.  Determine the starting rating: Each player or team starts with a certain Elo rating, which is typically based on their prior performance in the game or competition.
-
-2.  Calculate the expected score: Based on the Elo ratings of the two players or teams, a formula is used to estimate the probability of each player or team winning the game. The expected score is the predicted score for each player or team.
-
-3.  Calculate the actual score: After the game is played, the actual score is determined. For example, in chess, a win is worth one point, a draw is worth half a point, and a loss is worth zero points.
-
-4.  Calculate the rating change: The difference between the actual score and the expected score is used to calculate the rating change for each player or team. The formula for calculating the rating change depends on the specific Elo system being used.
-
-5.  Update the ratings: The new ratings for each player or team are calculated by adding the rating change to their previous rating.
-
-6.  Repeat for each game: The process is repeated for each game played, with the new ratings serving as the starting ratings for the next game.
-
-    $$R_i - R_j = 2199 - 2088 = 111$$
-
-    $$\Upsilon(R_i-R_j)=\frac{40}{1+e^{\frac{111}{174}}} = 13.8285752602$$
-
-```{r}
-
-elos <<- c(2199, 2088, 1982)
-print(elos)
-e = 2.71828
-
-update_elo <- function(a,b) { # winner is first, loser second
-  rA = elos[a]
-  rB = elos[b]
-
-  eA <- 40 / (1 + e^((rB - rA)/174))
-  eB <- 40 / (1 + e^((rA - rB)/174))
-  
-  # Winner is player A and gets one point
-  #sA <- 1
-  #sB <- 0
-  
-  #rA_new <- rA + (k*kA) * (sA-eA)
-  #rB_new <- rB + (k*kB) * (sB-eB)
-  
-  rA_new = rA + eA
-  rB_new = rB - eB
-
-  
-  elos[a] <<- rA_new
-  elos[b] <<- rB_new
-  
-  print(elos)
-}
-
-#Swiatek = 2199, Sabalenka = 2088, Gauff = 1982
-#Swiatek beating Sabalenka, Sabalenka beating Gauff, and Gauff beating Swiatek
-
-update_elo(1,2) # Swiatek beating Sabalenka = 1 beating 2
-update_elo(2,3) # Sabalenka beating Gauff   = 2 beating 3
-update_elo(3,1) # Gauff beating Swiatek     = 3 beating 1
-
-print("----------")
-print(elos)
-```
-
-Elo Rankings: Swiatek = 2192.572, Sabalenka = 2099.348, Gauff = 1974.577.
-
-## 3.2
-
-Repeat the computation, but assuming that the round robin occurred in the opposite order, so Gauff beats Swiatek, then Sabalenka beats Gauff, then Sabalenka beats Swiatek. What are the new Elo ratings in this case? Are they different from part 1? Why does this make sense given the structure of the Elo model?
-
-[\textbf{4 points}]
-
-```{r}
-
-elos <<- c(2199, 2088, 1982)
-print(elos)
-
-#Swiatek = 2199, Sabalenka = 2088, Gauff = 1982
-# Gauff beats Swiatek, then Sabalenka beats Gauff, then Swiatek beats Sabalenka
-
-update_elo(3,1) # Gauff beating Swiatek     = 3 beating 1
-update_elo(2,3) # Sabalenka beating Gauff   = 2 beating 3
-update_elo(1,2) # Swiatek beating Sabalenka = 1 beating 2
-
-print("----------")
-print(elos)
-```
-
-Elo Rankings: Swiatek = 2191.034, Sabalenka = 2096.545, Gauff = 1976.366.
-
-The rankings are different than in part 1. This makes sense since the elo updates are based off the values of the players involved elo at the time the match took place. By changing the order of the matches, the elo of the players for the 2nd and 3rd games have also changed due to being updated differently after the first game.
-
-## 3.3
-
-These Elo ratings are computed in a different way from the {\color{blue}\href{https://www.wtatennis.com/rankings/singles}{official WTA ratings}}, which assign points based on the round of a tournament in which a win occurred, scaling with the level of a tournament. How does this compare with the Elo system, and which do you think would perform better in prediction? [\textbf{2 points}]
-
-I think that the Elo model would outperforms the tournament tier model as the level of the tournament is a subjective matter and can contribute to inaccuracies. The Elo model is less subjective and less volatile. As one disappointing tournament can lead to a large drop in ranking under the tournament system, this seems unfair and inaccurate. Furthermore, rising players will take longer to be incorperated into the top ranks as they must compete in many tournaments in the top tier before they can be accurately mapped.
-
-# Problem 4 (not graded)
-
-How many hours did you spend on this HW?
-
-8 hours
