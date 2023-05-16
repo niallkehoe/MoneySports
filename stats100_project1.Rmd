@@ -28,6 +28,16 @@ suppressPackageStartupMessages(library(glmnet))
 suppressPackageStartupMessages(library(predtools))
 suppressPackageStartupMessages(library(psych))
 knitr::opts_chunk$set(echo = TRUE)
+
+# Checks if package is installed, installs if necessary, and loads package for current session
+
+pacman::p_load(
+  lubridate,  # general package for handling and converting dates  
+  parsedate,   # has function to "guess" messy dates
+  aweek,      # another option for converting dates to weeks, and weeks to dates
+  zoo,        # additional date/time functions
+  tidyverse,  # data management and visualization  
+  rio)        # data import/export
 ```
 
 # Acknowledgements
@@ -39,8 +49,15 @@ NO ACKNOWLEDGEMENTS
 ```{r}
 
 #df_final = read.csv("NBA_2022_23_3pdata_final.csv")
-bBall = read.csv("basketball-2022.csv")# %>% filter(Wk < 17)
+bBall = read.csv("basketball-2022.csv") #%>% filter(Date > )
+dim(bBall)
+
+bBall <- bBall %>% 
+  mutate(date_adj = as.Date(Date, format = "%a %b %d %Y"))
+bBall = bBall %>% filter(date_adj > "2022-02-09")
+
 View(bBall)
+dim(bBall)
 
 # this part is a bit complicated, but my best suggestion is to make a new matrix full of zeroes to fill in
 
@@ -67,7 +84,7 @@ for (i in 1:nrow(bBall)) {
 bt_mat[,'HFA'] = 1
 
 # we should multiply the point diff by -1 if the winning team was away
-bt_mat[,'Pt_Diff'] = bBall$PTS - bBall$PTS.1 # equivelant??? 
+bt_mat[,'Pt_Diff'] = (bBall$PTS - bBall$PTS.1) *-1 # equivelant??? 
 
 # if you want to do the unregularized models, create a dataframe
 
