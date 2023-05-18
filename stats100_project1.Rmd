@@ -49,19 +49,32 @@ NO ACKNOWLEDGEMENTS
 ```{r}
 
 #df_final = read.csv("NBA_2022_23_3pdata_final.csv")
-bBall = read.csv("basketball-2022.csv") #%>% filter(Date > )
+bBall = read.csv("basketball-2021.csv") #%>% filter(Date > )
 dim(bBall)
 
 bBall <- bBall %>% 
   mutate(date_adj = as.Date(Date, format = "%a %b %d %Y"))
-bBall = bBall %>% filter(date_adj > "2022-02-09")
+FILTER_DATE_CUTOFF = "2022-02-09"
 
+#List of hospitals we want to do further analysis on
+# goodHosp <- c("Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets", "Chicago Bulls", "Cleveland Cavaliers", "Detroit Pistons", "Indiana Pacers", "Miami Heat", "Milwaukee Bucks", "New York Knicks", "Orlando Magic", "Philadelphia 76ers", "Toronto Raptors", "Washington Wizards")
+
+bBall = bBall %>% filter(date_adj > FILTER_DATE_CUTOFF) 
+# %>% filter(Visitor.Neutral  %in% goodHosp) %>% filter(Home.Neutral  %in% goodHosp)
+# new conference filter
+  
 View(bBall)
 dim(bBall)
 
+
+
+
+#TRY RESTRICTING TO JUST WESTERN / EASTERN CONFERENCES
+
+
 # this part is a bit complicated, but my best suggestion is to make a new matrix full of zeroes to fill in
 
-teams = sort(unique(bBall$Visitor.Neutral))
+teams = sort(unique(bBall$Home.Neutral))
 num_teams = length(teams)
 
 # we create our data matrix, with columns for each team, the home field intercept and the pt difference
@@ -149,33 +162,33 @@ names(sort(bt_normal$coefficients[-1], decreasing=TRUE))
 print("-----")
 sort(bt_bin$coefficients[-1], decreasing=TRUE)
 
-rankingNormal   = sort(bt_normal$coefficients[-1], decreasing=TRUE)[1:5] # -1 to remove HFA
-rankingBinomial = sort(bt_bin$coefficients[-1], decreasing=TRUE)[1:5]    # -1 to remove HFA
-#print(rankingNormal)
-rankingNormalNames   = names(rankingNormal)
-rankingBinomialNames = names(rankingBinomial)
-
-teamsAgreed = list()
-teamsNotAgreed = list()
-for (item in rankingNormalNames) {
-  if (item %in% rankingBinomialNames) {
-    #print(item)
-    #teamsAgreed.append(item)
-    teamsAgreed <- c(teamsAgreed, item)
-  } else {
-    teamsNotAgreed <- c(teamsNotAgreed, item)
-  }
-}
-
-print("Teams agreed upon in top 5: ")
-for (item in teamsAgreed) {
-  print(item)
-}
-print("--------")
-print("Teams disagreed upon in top 5: ")
-for (item in teamsNotAgreed) {
-  print(item)
-}
+# rankingNormal   = sort(bt_normal$coefficients[-1], decreasing=TRUE)[1:5] # -1 to remove HFA
+# rankingBinomial = sort(bt_bin$coefficients[-1], decreasing=TRUE)[1:5]    # -1 to remove HFA
+# #print(rankingNormal)
+# rankingNormalNames   = names(rankingNormal)
+# rankingBinomialNames = names(rankingBinomial)
+# 
+# teamsAgreed = list()
+# teamsNotAgreed = list()
+# for (item in rankingNormalNames) {
+#   if (item %in% rankingBinomialNames) {
+#     #print(item)
+#     #teamsAgreed.append(item)
+#     teamsAgreed <- c(teamsAgreed, item)
+#   } else {
+#     teamsNotAgreed <- c(teamsNotAgreed, item)
+#   }
+# }
+# 
+# print("Teams agreed upon in top 5: ")
+# for (item in teamsAgreed) {
+#   print(item)
+# }
+# print("--------")
+# print("Teams disagreed upon in top 5: ")
+# for (item in teamsNotAgreed) {
+#   print(item)
+# }
 ```
 
 ```{r}
@@ -185,10 +198,9 @@ teamNames = names(sort(bt_normal$coefficients[-1], decreasing=TRUE))
 append(teamNames, "Washington.Wizards")
 # DONT FORGET TO ADD BACK IN BASELINE at 0
 
-NBASalaries = read.csv("basketball-2022-salary.csv") #%>% filter(Date > )
+NBASalaries = read.csv("basketball-2021-salary.csv")#  %>% filter(Team %in% goodHosp)
 #View(NBASalaries)
 
-NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
 NBASalaries
 #NBASalaryDict = {}
 
@@ -206,13 +218,11 @@ NBASalaries
 coeffs = bt_normal$coefficients[-1]
 coeffs["Washington.Wizards"] = 0
 
-dfResult <- data.frame(coeffs, NBASalaries$X2022.23, NBASalaries$Rk)# %>% mutate(Salaries = NBASalaries$X2022.23 %>% str_remove_all("\\$,") %>% as.numeric())
-dfResult$Salaries = as.numeric(gsub("\\$", "", dfResult$NBASalaries.X2022.23))
-dfResult$Salaries = dfResult$Salaries / 1000000
+NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
 
-#for(i in 1:nrow(dfResult)) {
- # dfResult[formattedName] = substring(dfResult[i,]$NBASalaries.X2022.23,2)
-#}
+dfResult <- data.frame(coeffs, NBASalaries$X2021.22, NBASalaries$Rk)# %>% mutate(Salaries = NBASalaries$X2022.23 %>% str_remove_all("\\$,") %>% as.numeric())
+dfResult$Salaries = as.numeric(gsub("\\$", "", dfResult$NBASalaries.X2021.22))
+dfResult$Salaries = dfResult$Salaries / 1000000
 
 View(dfResult)
 
@@ -223,21 +233,85 @@ plot(x = dfResult$Salaries, y = dfResult$coeffs,
    main = "Salaries vs Performance"
 )
 
+modelCoeff = lm(coeffs ~ Salaries, data = dfResult)
+summary(modelCoeff)
+
 ```
 
 ```{r}
 
-plot(x = dfResult$Salaries, y = dfResult$NBASalaries.Rk,
+dfResult <- dfResult[order(dfResult$coeffs,decreasing=FALSE),]
+ranksMap = seq(1, 30, by=1)
+dfResult$coeffRank = ranksMap
+dfResult
+```
+
+```{r}
+
+
+# Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
+plot(x = dfResult$Salaries, y = dfResult$coeffRank,
    xlab = "Salaries (millions)",
-   ylab = "Rank",	 
-   main = "Salaries vs Rank"
+   ylab = "Performance by ranking in BT",	 
+   main = "Salaries vs Performance"
 )
 
-dfResult$RkPerformance = 30 - dfResult$NBASalaries.Rk
-plot(x = dfResult$Salaries, y = dfResult$RkPerformance,
+cor(dfResult$Salaries, dfResult$coeffRank)
+
+modelRank = lm(coeffRank ~ Salaries, data = dfResult)
+summary(modelRank)
+
+# Log change
+
+plot(x = log(dfResult$Salaries), y = dfResult$coeffRank,
    xlab = "Salaries (millions)",
-   ylab = "Rank",	 
-   main = "Salaries vs Rank"
+   ylab = "Performance by ranking in BT",	 
+   main = "Salaries vs Performance"
+)
+modelRank = lm(coeffRank ~ log(Salaries), data = dfResult)
+summary(modelRank)
+```
+
+```{r}
+
+# SALARY RANKE NOT CORRECT -> USE NBA RANK
+
+#plot(x = dfResult$Salaries, y = dfResult$NBASalaries.Rk,
+ #  xlab = "Salaries (millions)",
+  # ylab = "Rank (lower better)",	 
+   #main = "Salaries vs Rank"
+#)
+
+#dfResult$RkPerformance = 30 - dfResult$NBASalaries.Rk
+#plot(x = dfResult$Salaries, y = dfResult$RkPerformance,
+ #  xlab = "Salaries (millions)",
+  # ylab = "Rank (higher better)",	 
+   #main = "Salaries vs Rank"
+#)
+
+#View(dfResult)
+
+standings = read.csv("basketball-2021-standings.csv") #%>% filter(Date > )
+
+dfStandings <- data.frame(standings$Team, ranksMap) #NBASalaries$X2021.22, NBASalaries$Rk)
+
+#, NBASalaries$X2021.22
+NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
+dfStandings <- dfStandings[order(dfStandings$standings.Team,decreasing=FALSE),]
+
+dfStandings$Salaries = NBASalaries$X2021.22
+
+dfStandings$Salaries = as.numeric(gsub("\\$", "", dfStandings$Salaries))
+dfStandings$Salaries = dfStandings$Salaries / 1000000
+
+#dfStandings <- dfStandings[order(dfStandings$dfStandings.Team,decreasing=FALSE),]
+
+View(dfStandings)
+
+plot(x = dfStandings$Salaries, y = dfStandings$rank,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by ranking from number of wins",	 
+   main = "Salaries vs Performance"
 )
 ```
 
