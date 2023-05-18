@@ -180,49 +180,52 @@ for (item in teamsNotAgreed) {
 
 ```{r}
 
-# you can predict with the predict() function, and with those predictions determine which team the model thinks will win a game
-bowlGames = read.csv("power5fbs.csv") %>% filter(Wk >= 17)
-#View(bowlGames)
+#length(names(sort(bt_normal$coefficients[-1], decreasing=TRUE)))
+teamNames = names(sort(bt_normal$coefficients[-1], decreasing=TRUE))
+append(teamNames, "Washington.Wizards")
+# DONT FORGET TO ADD BACK IN BASELINE at 0
 
-# we create our data matrix, with columns for each team, the home field intercept and the pt difference
-bt_bowl_mat = matrix(0, nrow(bowlGames), num_teams + 2)
-# fill in the list of column names for your data matrix
-colnames(bt_bowl_mat) = c('HFA', 'Pt_Diff', teams)
+NBASalaries = read.csv("basketball-2022-salary.csv") #%>% filter(Date > )
+#View(NBASalaries)
 
-# then write a for loop to, for each game in your original data, fill in the point diff, home field, and each team's column appropriately
-# for each game, add the home and away team
-for (i in 1:nrow(bowlGames)) {
-  # we want 1 for the home team, -1 for the away, so we'll use the Away column which tells us if the winner was Away or not
-  bt_bowl_mat[i,bowlGames$Winner[i]] = 2 * (bowlGames$Site[i] != '@') - 1
-  bt_bowl_mat[i,bowlGames$Loser[i]]  = 2 * (bowlGames$Site[i] == '@') - 1
-}
+NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
+NBASalaries
+#NBASalaryDict = {}
 
-# we define 1 for home and -1 for away so the HFA is always the same
-bt_bowl_mat[,'HFA'] = 1
-# we should multiply the point diff by -1 if the winning team was away
-bt_bowl_mat[,'Pt_Diff'] = (bowlGames$Pts - bowlGames$Pts.1) * (2 * (bowlGames$Site != '@') - 1)
+#for(i in 1:nrow(NBASalaries)) {
+#  formattedName = NBASalaries[i,]$Team
+#  formattedName <- str_replace_all(formattedName, " ", ".")
+#  NBASalaryDict[formattedName] = substring(NBASalaries[i,]$X2022.23,2)
+#}
 
-# in order to predict on test data, you will have to create either a new dataframe or matrix with the same number of columns/labeling format
+#NBASalaryDict
+```
 
-bt_bowl_df = data.frame(bt_bowl_mat)
-bt_normal_pred   = predict(bt_normal, bt_bowl_df)
-bt_binomial_pred = predict(bt_bin, bt_bowl_df)
+```{r}
 
-# For this bowl games all were won by the first team so this will work
-bt_normal_pred_accuracy   = bt_normal_pred > 0
-bt_binomial_pred_accuracy = bt_binomial_pred > 0
+coeffs = bt_normal$coefficients[-1]
+coeffs["Washington.Wizards"] = 0
 
-bt_normal_correct   = sum(bt_normal_pred_accuracy)
-bt_binomial_correct = sum(bt_binomial_pred_accuracy)
+dfResult <- data.frame(coeffs, NBASalaries$X2022.23)# %>% mutate(Salaries = NBASalaries$X2022.23 %>% str_remove_all("\\$,") %>% as.numeric())
+dfResult$Salaries = as.numeric(gsub("\\$", "", dfResult$NBASalaries.X2022.23))
+dfResult$Salaries = dfResult$Salaries / 1000000
 
-print(bt_normal_correct / nrow(bt_bowl_df))
-print(bt_binomial_correct / nrow(bt_bowl_df))
+#for(i in 1:nrow(dfResult)) {
+ # dfResult[formattedName] = substring(dfResult[i,]$NBASalaries.X2022.23,2)
+#}
+
+#View(dfResult)
+
+# Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
+plot(x = dfResult$Salaries, y = dfResult$coeffs,
+   xlab = "Salaries (millions)",
+   ylab = "Performance",	 
+   main = "Salaries vs Performance"
+)
 
 ```
 
-The models agrees that both Georgia and Tennessee are in the top 5 teams but disagree on Kansas State, Texas Christian, and Texas.
 
-The normal model outperformed the normal model on predicting the bowl results in the games (80.95238% vs 52.38095%)
 
 ## 2.4
 
