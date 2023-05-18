@@ -206,7 +206,7 @@ NBASalaries
 coeffs = bt_normal$coefficients[-1]
 coeffs["Washington.Wizards"] = 0
 
-dfResult <- data.frame(coeffs, NBASalaries$X2022.23)# %>% mutate(Salaries = NBASalaries$X2022.23 %>% str_remove_all("\\$,") %>% as.numeric())
+dfResult <- data.frame(coeffs, NBASalaries$X2022.23, NBASalaries$Rk)# %>% mutate(Salaries = NBASalaries$X2022.23 %>% str_remove_all("\\$,") %>% as.numeric())
 dfResult$Salaries = as.numeric(gsub("\\$", "", dfResult$NBASalaries.X2022.23))
 dfResult$Salaries = dfResult$Salaries / 1000000
 
@@ -214,7 +214,7 @@ dfResult$Salaries = dfResult$Salaries / 1000000
  # dfResult[formattedName] = substring(dfResult[i,]$NBASalaries.X2022.23,2)
 #}
 
-#View(dfResult)
+View(dfResult)
 
 # Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
 plot(x = dfResult$Salaries, y = dfResult$coeffs,
@@ -225,7 +225,21 @@ plot(x = dfResult$Salaries, y = dfResult$coeffs,
 
 ```
 
+```{r}
 
+plot(x = dfResult$Salaries, y = dfResult$NBASalaries.Rk,
+   xlab = "Salaries (millions)",
+   ylab = "Rank",	 
+   main = "Salaries vs Rank"
+)
+
+dfResult$RkPerformance = 30 - dfResult$NBASalaries.Rk
+plot(x = dfResult$Salaries, y = dfResult$RkPerformance,
+   xlab = "Salaries (millions)",
+   ylab = "Rank",	 
+   main = "Salaries vs Rank"
+)
+```
 
 ## 2.4
 
