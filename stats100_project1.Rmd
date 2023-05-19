@@ -229,13 +229,25 @@ View(dfResult)
 # Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
 plot(x = dfResult$Salaries, y = dfResult$coeffs,
    xlab = "Salaries (millions)",
-   ylab = "Performance",	 
-   main = "Salaries vs Performance"
+   ylab = "Performance (Pt diff vs Washington Wizards)",	 
+   main = "A: Salaries vs Performance"
 )
+abline(lm(dfResult$coeffs ~ dfResult$Salaries), col='blue')
 
 modelCoeff = lm(coeffs ~ Salaries, data = dfResult)
 summary(modelCoeff)
 
+
+
+
+# Divide by average salary -try 
+```
+
+```{r}
+
+hist(dfResult$Salaries, col = 'skyblue3', breaks = 15, 
+   xlab = "Salaries (millions)",
+   main = "Salaries vs Frequency")
 ```
 
 ```{r}
@@ -266,7 +278,7 @@ summary(modelRank)
 plot(x = log(dfResult$Salaries), y = dfResult$coeffRank,
    xlab = "Salaries (millions)",
    ylab = "Performance by ranking in BT",	 
-   main = "Salaries vs Performance"
+   main = "log(Salaries) vs Performance"
 )
 modelRank = lm(coeffRank ~ log(Salaries), data = dfResult)
 summary(modelRank)
@@ -274,45 +286,47 @@ summary(modelRank)
 
 ```{r}
 
-# SALARY RANKE NOT CORRECT -> USE NBA RANK
+# NBA RANKINGS W-L
 
-#plot(x = dfResult$Salaries, y = dfResult$NBASalaries.Rk,
- #  xlab = "Salaries (millions)",
-  # ylab = "Rank (lower better)",	 
-   #main = "Salaries vs Rank"
-#)
-
-#dfResult$RkPerformance = 30 - dfResult$NBASalaries.Rk
-#plot(x = dfResult$Salaries, y = dfResult$RkPerformance,
- #  xlab = "Salaries (millions)",
-  # ylab = "Rank (higher better)",	 
-   #main = "Salaries vs Rank"
-#)
-
-#View(dfResult)
-
-standings = read.csv("basketball-2021-standings.csv") #%>% filter(Date > )
-
+standings = read.csv("NBA/basketball-2021-standings.csv") #%>% filter(Date > )
 dfStandings <- data.frame(standings$Team, ranksMap) #NBASalaries$X2021.22, NBASalaries$Rk)
 
-#, NBASalaries$X2021.22
 NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
 dfStandings <- dfStandings[order(dfStandings$standings.Team,decreasing=FALSE),]
 
 dfStandings$Salaries = NBASalaries$X2021.22
-
 dfStandings$Salaries = as.numeric(gsub("\\$", "", dfStandings$Salaries))
 dfStandings$Salaries = dfStandings$Salaries / 1000000
 
 #dfStandings <- dfStandings[order(dfStandings$dfStandings.Team,decreasing=FALSE),]
 
+
+colnames(dfStandings) <- c("Team", "ranking", "Salaries")
+
+
+dfStandings$rankingA = 30- dfStandings$ranking
+
 View(dfStandings)
 
-plot(x = dfStandings$Salaries, y = dfStandings$rank,
+plot(x = dfStandings$Salaries, y = dfStandings$ranking,
    xlab = "Salaries (millions)",
-   ylab = "Performance by ranking from number of wins",	 
+   ylab = "Performance by ranking No. wins (lower better)",	 
    main = "Salaries vs Performance"
 )
+
+plot(x = dfStandings$Salaries, y = dfStandings$rankingA,
+   xlab = "Salaries (millions)",
+   ylab = "Inverted Ranking (higher better)",	 
+   main = "B: Salaries vs Performance"
+)
+abline(lm(dfStandings$rankingA ~ dfStandings$Salaries), col='blue')
+
+
+modelRank = lm(rankingA ~ Salaries, data = dfStandings)
+summary(modelRank)
+
+# Try
+# Total score / $ spent
 ```
 
 ## 2.4

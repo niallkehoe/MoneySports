@@ -1,0 +1,202 @@
+---
+title: "Stats 100: Project - MLB"
+author: "Niall Kehoe"
+date: "05/11/2023"
+header-includes:
+   - \usepackage{bbm, amsmath,amsfonts,amsthm,amssymb,mathrsfs,amsxtra,amscd,latexsym, xcolor, graphicx, fvextra}
+   - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+output: pdf_document
+---
+
+\newcommand{\Var}{\mathrm{Var}}
+
+```{r}
+suppressPackageStartupMessages(library(knitr)) #makes pdfs
+suppressPackageStartupMessages(library(latex2exp))
+suppressPackageStartupMessages(library(ggplot2)) #makes nice plots
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(glmnet))
+suppressPackageStartupMessages(library(predtools))
+suppressPackageStartupMessages(library(psych))
+knitr::opts_chunk$set(echo = TRUE)
+
+# Checks if package is installed, installs if necessary, and loads package for current session
+
+pacman::p_load(
+  lubridate,  # general package for handling and converting dates  
+  parsedate,   # has function to "guess" messy dates
+  aweek,      # another option for converting dates to weeks, and weeks to dates
+  zoo,        # additional date/time functions
+  tidyverse,  # data management and visualization  
+  rio)        # data import/export
+```
+
+# Acknowledgements
+
+NO ACKNOWLEDGEMENTS
+
+# Bradley-Terry Ratings
+
+```{r}
+
+#df_final = read.csv("NBA_2022_23_3pdata_final.csv")
+mlb2022 = read.csv("mlb2022.csv") #%>% filter(Date > )
+
+#Removing last row MLB as it is totals
+mlb2022 <- slice(mlb2022, 1:(n() - 2)) 
+
+View(mlb2022)
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+#length(names(sort(bt_normal$coefficients[-1], decreasing=TRUE)))
+teamNames = names(sort(bt_normal$coefficients[-1], decreasing=TRUE))
+append(teamNames, "Washington.Wizards")
+# DONT FORGET TO ADD BACK IN BASELINE at 0
+
+NBASalaries = read.csv("basketball-2021-salary.csv")#  %>% filter(Team %in% goodHosp)
+#View(NBASalaries)
+
+NBASalaries
+#NBASalaryDict = {}
+
+#for(i in 1:nrow(NBASalaries)) {
+#  formattedName = NBASalaries[i,]$Team
+#  formattedName <- str_replace_all(formattedName, " ", ".")
+#  NBASalaryDict[formattedName] = substring(NBASalaries[i,]$X2022.23,2)
+#}
+
+#NBASalaryDict
+```
+
+```{r}
+
+coeffs = bt_normal$coefficients[-1]
+coeffs["Washington.Wizards"] = 0
+
+NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
+
+dfResult <- data.frame(coeffs, NBASalaries$X2021.22, NBASalaries$Rk)# %>% mutate(Salaries = NBASalaries$X2022.23 %>% str_remove_all("\\$,") %>% as.numeric())
+dfResult$Salaries = as.numeric(gsub("\\$", "", dfResult$NBASalaries.X2021.22))
+dfResult$Salaries = dfResult$Salaries / 1000000
+
+View(dfResult)
+
+# Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
+plot(x = dfResult$Salaries, y = dfResult$coeffs,
+   xlab = "Salaries (millions)",
+   ylab = "Performance (pt diff vs Washington Wizards)",	 
+   main = "Salaries vs Performance"
+)
+
+modelCoeff = lm(coeffs ~ Salaries, data = dfResult)
+summary(modelCoeff)
+
+
+# Divide by average salary -try 
+```
+
+```{r}
+
+hist(dfResult$Salaries, col = 'skyblue3', breaks = 15)
+```
+
+```{r}
+
+dfResult <- dfResult[order(dfResult$coeffs,decreasing=FALSE),]
+ranksMap = seq(1, 30, by=1)
+dfResult$coeffRank = ranksMap
+dfResult
+```
+
+```{r}
+
+
+# Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
+plot(x = dfResult$Salaries, y = dfResult$coeffRank,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by ranking in BT",	 
+   main = "Salaries vs Performance"
+)
+
+cor(dfResult$Salaries, dfResult$coeffRank)
+
+modelRank = lm(coeffRank ~ Salaries, data = dfResult)
+summary(modelRank)
+
+# Log change
+
+plot(x = log(dfResult$Salaries), y = dfResult$coeffRank,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by ranking in BT",	 
+   main = "log(Salaries) vs Performance"
+)
+modelRank = lm(coeffRank ~ log(Salaries), data = dfResult)
+summary(modelRank)
+```
+
+```{r}
+
+# NBA RANKINGS W-L
+
+standings = read.csv("basketball-2021-standings.csv") #%>% filter(Date > )
+dfStandings <- data.frame(standings$Team, ranksMap) #NBASalaries$X2021.22, NBASalaries$Rk)
+
+NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
+dfStandings <- dfStandings[order(dfStandings$standings.Team,decreasing=FALSE),]
+
+dfStandings$Salaries = NBASalaries$X2021.22
+dfStandings$Salaries = as.numeric(gsub("\\$", "", dfStandings$Salaries))
+dfStandings$Salaries = dfStandings$Salaries / 1000000
+
+#dfStandings <- dfStandings[order(dfStandings$dfStandings.Team,decreasing=FALSE),]
+
+
+colnames(dfStandings) <- c("Team", "ranking", "Salaries")
+
+
+dfStandings$rankingA = 30- dfStandings$ranking
+
+View(dfStandings)
+
+plot(x = dfStandings$Salaries, y = dfStandings$ranking,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by ranking No. wins (lower better)",	 
+   main = "Salaries vs Performance"
+)
+
+plot(x = dfStandings$Salaries, y = dfStandings$rankingA,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by rankingA (higher better)",	 
+   main = "Salaries vs Performance"
+)
+
+
+modelRank = lm(rankingA ~ Salaries, data = dfStandings)
+summary(modelRank)
+
+# Try
+# Total score / $ spent
+```
+
+## 2.4
+
+In either model you fit, what are some model assumptions that you find problematic that might lead to shortcomings in the results? [\textbf{2 points}]
+
+Shortcomings: styles of play affecting which teams beat which, injuries affecting performance, small number of games in training set, trading of players mid season.
