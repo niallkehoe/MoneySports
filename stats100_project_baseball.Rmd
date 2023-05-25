@@ -44,6 +44,10 @@ mlb2022 = read.csv("mlb2022.csv") #%>% filter(Date > )
 
 #Removing last row MLB as it is totals
 mlb2022 <- slice(mlb2022, 1:(n() - 2)) 
+mlb2022 <- mlb2022[order(mlb2022$R,decreasing=TRUE),]
+
+# IDEA:
+# or use win # as WELL!
 
 View(mlb2022)
 
@@ -52,151 +56,264 @@ View(mlb2022)
 
 ```{r}
 
+salaries =  read.csv("MLB-Salaries-2022.csv")
 
-```
+dollarToInteger <- function(amount) {
+  # Remove dollar sign and commas
+  amount <- gsub("\\$|,", "", amount)
+  
+  # Convert to integer
+  amount <- as.integer(amount)
+  
+  return(amount)
+}
 
-```{r}
+salaries$Salaries = dollarToInteger(salaries$X2022.TOTAL.PAYROLL) / 1000000
+# salaries$Salaries = as.numeric(gsub("\\$", "", salaries$Salaries))
+# salaries$Salaries = salaries$Salaries / 1000000
+View(salaries)
 
-```
-
-```{r}
-
-```
-
-```{r}
-
-#length(names(sort(bt_normal$coefficients[-1], decreasing=TRUE)))
-teamNames = names(sort(bt_normal$coefficients[-1], decreasing=TRUE))
-append(teamNames, "Washington.Wizards")
-# DONT FORGET TO ADD BACK IN BASELINE at 0
-
-NBASalaries = read.csv("basketball-2021-salary.csv")#  %>% filter(Team %in% goodHosp)
-#View(NBASalaries)
-
-NBASalaries
-#NBASalaryDict = {}
-
-#for(i in 1:nrow(NBASalaries)) {
-#  formattedName = NBASalaries[i,]$Team
-#  formattedName <- str_replace_all(formattedName, " ", ".")
-#  NBASalaryDict[formattedName] = substring(NBASalaries[i,]$X2022.23,2)
-#}
-
-#NBASalaryDict
-```
-
-```{r}
-
-coeffs = bt_normal$coefficients[-1]
-coeffs["Washington.Wizards"] = 0
-
-NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
-
-dfResult <- data.frame(coeffs, NBASalaries$X2021.22, NBASalaries$Rk)# %>% mutate(Salaries = NBASalaries$X2022.23 %>% str_remove_all("\\$,") %>% as.numeric())
-dfResult$Salaries = as.numeric(gsub("\\$", "", dfResult$NBASalaries.X2021.22))
-dfResult$Salaries = dfResult$Salaries / 1000000
-
-View(dfResult)
-
-# Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
-plot(x = dfResult$Salaries, y = dfResult$coeffs,
+plot(x = salaries$Salaries, y = salaries$WIN.,
    xlab = "Salaries (millions)",
-   ylab = "Performance (pt diff vs Washington Wizards)",	 
+   ylab = "Performance by WIN %",	 
    main = "Salaries vs Performance"
 )
 
-modelCoeff = lm(coeffs ~ Salaries, data = dfResult)
-summary(modelCoeff)
-
-
-# Divide by average salary -try 
-```
-
-```{r}
-
-hist(dfResult$Salaries, col = 'skyblue3', breaks = 15)
-```
-
-```{r}
-
-dfResult <- dfResult[order(dfResult$coeffs,decreasing=FALSE),]
-ranksMap = seq(1, 30, by=1)
-dfResult$coeffRank = ranksMap
-dfResult
-```
-
-```{r}
-
-
-# Plot the chart for cars with weight between 2.5 to 5 and mileage between 15 and 30.
-plot(x = dfResult$Salaries, y = dfResult$coeffRank,
+plot(x = log(salaries$Salaries), y = salaries$WIN.,
    xlab = "Salaries (millions)",
-   ylab = "Performance by ranking in BT",	 
-   main = "Salaries vs Performance"
-)
-
-cor(dfResult$Salaries, dfResult$coeffRank)
-
-modelRank = lm(coeffRank ~ Salaries, data = dfResult)
-summary(modelRank)
-
-# Log change
-
-plot(x = log(dfResult$Salaries), y = dfResult$coeffRank,
-   xlab = "Salaries (millions)",
-   ylab = "Performance by ranking in BT",	 
+   ylab = "Performance by WIN %",	 
    main = "log(Salaries) vs Performance"
 )
-modelRank = lm(coeffRank ~ log(Salaries), data = dfResult)
-summary(modelRank)
 ```
 
 ```{r}
 
-# NBA RANKINGS W-L
-
-standings = read.csv("basketball-2021-standings.csv") #%>% filter(Date > )
-dfStandings <- data.frame(standings$Team, ranksMap) #NBASalaries$X2021.22, NBASalaries$Rk)
-
-NBASalaries <- NBASalaries[order(NBASalaries$Team,decreasing=FALSE),]
-dfStandings <- dfStandings[order(dfStandings$standings.Team,decreasing=FALSE),]
-
-dfStandings$Salaries = NBASalaries$X2021.22
-dfStandings$Salaries = as.numeric(gsub("\\$", "", dfStandings$Salaries))
-dfStandings$Salaries = dfStandings$Salaries / 1000000
-
-#dfStandings <- dfStandings[order(dfStandings$dfStandings.Team,decreasing=FALSE),]
-
-
-colnames(dfStandings) <- c("Team", "ranking", "Salaries")
-
-
-dfStandings$rankingA = 30- dfStandings$ranking
-
-View(dfStandings)
-
-plot(x = dfStandings$Salaries, y = dfStandings$ranking,
-   xlab = "Salaries (millions)",
-   ylab = "Performance by ranking No. wins (lower better)",	 
-   main = "Salaries vs Performance"
-)
-
-plot(x = dfStandings$Salaries, y = dfStandings$rankingA,
-   xlab = "Salaries (millions)",
-   ylab = "Performance by rankingA (higher better)",	 
-   main = "Salaries vs Performance"
-)
-
-
-modelRank = lm(rankingA ~ Salaries, data = dfStandings)
-summary(modelRank)
-
-# Try
-# Total score / $ spent
 ```
 
-## 2.4
+```{r}
 
-In either model you fit, what are some model assumptions that you find problematic that might lead to shortcomings in the results? [\textbf{2 points}]
+# Merge based on 'Team' and 'Tm' columns
+merged_df_2022 <- merge(mlb2022, salaries, by.x = "Tm", by.y = "TEAM", all = TRUE)
 
-Shortcomings: styles of play affecting which teams beat which, injuries affecting performance, small number of games in training set, trading of players mid season.
+# Print the merged data frame
+#View(merged_df_2022)
+
+
+plot(x = merged_df_2022$Salaries, y = merged_df_2022$R,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(merged_df_2022$R ~ merged_df_2022$Salaries), col='blue')
+
+plot(x = log(merged_df_2022$Salaries), y = merged_df_2022$R,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "log(Salaries) vs Performance"
+)
+abline(lm(merged_df_2022$R ~ log(merged_df_2022$Salaries)), col='blue')
+```
+
+```{r}
+
+
+model1 = lm(R ~ Salaries, data = merged_df_2022)
+summary(model1)
+
+model2 = lm(R ~ log(Salaries), data = merged_df_2022)
+summary(model2)
+
+
+```
+
+```{r}
+
+
+readInSalaries<- function(year) {
+  filename <- paste0("MLB/MLB Salaries - ", year, ".csv")
+  salaries = read.csv(filename)
+  
+  salaries$Salaries = dollarToInteger(salaries$TOTAL.PAYROL) / 1000000
+  # salaries$Salaries = dollarToInteger(salaries$X2022.TOTAL.PAYROLL) / 1000000
+  return (salaries)
+}
+
+readInResults <- function(year) {
+  filename <- paste0("MLB/mlb", year, ".csv")
+  data = read.csv(filename)
+  data <- slice(data, 1:(n() - 2)) 
+  data <- data[order(data$R,decreasing=TRUE),]
+  
+  salaries = readInSalaries(year)
+  
+  # Merge based on 'Team' and 'Tm' columns
+  merged_df <- merge(data, salaries, by.x = "Tm", by.y = "TEAM", all = TRUE)
+  merged_df$Tm = paste0(merged_df$Tm, "-", year)
+  
+  # Adding in more data over time, by normalising based on that years average
+  
+  # Normalise Salaries
+  merged_df$Salaries.Norm = merged_df$Salaries / mean(merged_df$Salaries)
+  merged_df$R.Norm = merged_df$R / mean(merged_df$R)
+
+  return(merged_df)
+}
+
+year = 2022
+mlb2021 = readInResults(year)
+View(mlb2021)
+
+```
+
+```{r}
+
+plot(x = mlb2021$Salaries.Norm, y = mlb2021$R.Norm,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(mlb2021$R.Norm ~ mlb2021$Salaries.Norm), col='red')
+```
+
+```{r}
+
+
+
+mlb2022 = readInResults(2022)
+mlb2021 = readInResults(2021)
+mlb2020 = readInResults(2020)
+
+combined_df <- data.frame()
+
+# Add rows from df1, df2, and df3 to combined_df
+combined_df <- rbind(combined_df, mlb2022)
+combined_df <- rbind(combined_df, mlb2021)
+combined_df <- rbind(combined_df, mlb2020)
+
+# Print the combined data frame
+View(combined_df)
+```
+
+```{r}
+
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$R.Norm,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$R.Norm ~ combined_df$Salaries.Norm), col='red')
+```
+
+```{r}
+
+model = lm(R.Norm ~ Salaries.Norm, data = combined_df)
+summary(model)
+```
+
+## Team Total Spending
+
+```{r}
+
+readInSalaries2<- function(year) {
+  filename <- paste0("MLB/salaries-2/salaries", year, ".csv")
+  salaries = read.csv(filename)
+  
+  salaries$Salaries = dollarToInteger(salaries$last.yr.payroll) / 1000000
+  # salaries$Salaries = dollarToInteger(salaries$X2022.TOTAL.PAYROLL) / 1000000
+  return (salaries)
+}
+
+readInResults2 <- function(year) {
+  filename <- paste0("MLB/mlb", year, ".csv")
+  data = read.csv(filename)
+  data <- slice(data, 1:(n() - 2))
+  data <- data[order(data$R,decreasing=TRUE),]
+  
+  salaries = readInSalaries2(year)
+  
+  # Merge based on 'Team' and 'Tm' columns
+  merged_df <- merge(data, salaries, by.x = "Tm", by.y = "team.name", all = TRUE)
+  merged_df$Tm = paste0(merged_df$Tm, "-", year)
+  
+  # Adding in more data over time, by normalising based on that years average
+  
+  # Normalise Salaries
+  merged_df$Salaries.Norm = merged_df$Salaries / mean(merged_df$Salaries)
+  merged_df$R.Norm = merged_df$R / mean(merged_df$R)
+
+  return(merged_df)
+}
+
+year = 2022
+mlb2021 = readInResults2(year)
+View(mlb2021)
+
+```
+
+```{r}
+
+
+mlb2022 = readInResults2(2022)
+mlb2021 = readInResults2(2021)
+mlb2020 = readInResults2(2020)
+
+combined_df <- data.frame()
+
+# Add rows from df1, df2, and df3 to combined_df
+combined_df <- rbind(combined_df, mlb2022)
+combined_df <- rbind(combined_df, mlb2021)
+combined_df <- rbind(combined_df, mlb2020)
+
+# Print the combined data frame
+View(combined_df)
+```
+
+```{r}
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$R.Norm,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$R.Norm ~ combined_df$Salaries.Norm), col='red')
+
+```
+
+```{r}
+
+model = lm(R.Norm ~ Salaries.Norm, data = combined_df)
+summary(model)
+
+# Less correlation as it includes factors which muddle the data
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```

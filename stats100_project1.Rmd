@@ -49,7 +49,7 @@ NO ACKNOWLEDGEMENTS
 ```{r}
 
 #df_final = read.csv("NBA_2022_23_3pdata_final.csv")
-bBall = read.csv("basketball-2021.csv") #%>% filter(Date > )
+bBall = read.csv("NBA/basketball-2021.csv") #%>% filter(Date > )
 dim(bBall)
 
 bBall <- bBall %>% 
@@ -198,7 +198,7 @@ teamNames = names(sort(bt_normal$coefficients[-1], decreasing=TRUE))
 append(teamNames, "Washington.Wizards")
 # DONT FORGET TO ADD BACK IN BASELINE at 0
 
-NBASalaries = read.csv("basketball-2021-salary.csv")#  %>% filter(Team %in% goodHosp)
+NBASalaries = read.csv("NBA/basketball-2021-salary.csv")#  %>% filter(Team %in% goodHosp)
 #View(NBASalaries)
 
 NBASalaries
