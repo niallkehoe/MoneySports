@@ -130,7 +130,7 @@ summary(model2)
 
 
 readInSalaries<- function(year) {
-  filename <- paste0("MLB/MLB Salaries - ", year, ".csv")
+  filename <- paste0("MLB/Salaries/MLB Salaries - ", year, ".csv")
   salaries = read.csv(filename)
   
   salaries$Salaries = dollarToInteger(salaries$TOTAL.PAYROL) / 1000000
@@ -139,7 +139,7 @@ readInSalaries<- function(year) {
 }
 
 readInResults <- function(year) {
-  filename <- paste0("MLB/mlb", year, ".csv")
+  filename <- paste0("MLB/season/mlb", year, ".csv")
   data = read.csv(filename)
   data <- slice(data, 1:(n() - 2)) 
   data <- data[order(data$R,decreasing=TRUE),]
@@ -153,8 +153,8 @@ readInResults <- function(year) {
   # Adding in more data over time, by normalising based on that years average
   
   # Normalise Salaries
-  merged_df$Salaries.Norm = merged_df$Salaries / mean(merged_df$Salaries)
-  merged_df$R.Norm = merged_df$R / mean(merged_df$R)
+  merged_df$Salaries.Norm = (merged_df$Salaries - mean(merged_df$Salaries)) / mean(merged_df$Salaries)
+  merged_df$R.Norm = (merged_df$R - mean(merged_df$R)) / mean(merged_df$R)
 
   return(merged_df)
 }
@@ -177,11 +177,18 @@ abline(lm(mlb2021$R.Norm ~ mlb2021$Salaries.Norm), col='red')
 
 ```{r}
 
-
-
 mlb2022 = readInResults(2022)
 mlb2021 = readInResults(2021)
 mlb2020 = readInResults(2020)
+mlb2019 = readInResults(2019)
+mlb2018 = readInResults(2018)
+mlb2017 = readInResults(2017)
+mlb2016 = readInResults(2016)
+mlb2015 = readInResults(2015)
+mlb2014 = readInResults(2014)
+mlb2013 = readInResults(2013)
+mlb2012 = readInResults(2012)
+mlb2011 = readInResults(2011)
 
 combined_df <- data.frame()
 
@@ -189,6 +196,15 @@ combined_df <- data.frame()
 combined_df <- rbind(combined_df, mlb2022)
 combined_df <- rbind(combined_df, mlb2021)
 combined_df <- rbind(combined_df, mlb2020)
+combined_df <- rbind(combined_df, mlb2019)
+combined_df <- rbind(combined_df, mlb2018)
+combined_df <- rbind(combined_df, mlb2017)
+combined_df <- rbind(combined_df, mlb2016)
+combined_df <- rbind(combined_df, mlb2015)
+combined_df <- rbind(combined_df, mlb2014)
+combined_df <- rbind(combined_df, mlb2013)
+combined_df <- rbind(combined_df, mlb2012)
+combined_df <- rbind(combined_df, mlb2011)
 
 # Print the combined data frame
 View(combined_df)
@@ -209,6 +225,34 @@ abline(lm(combined_df$R.Norm ~ combined_df$Salaries.Norm), col='red')
 
 model = lm(R.Norm ~ Salaries.Norm, data = combined_df)
 summary(model)
+```
+
+```{r}
+
+
+# must exclude covid year for this to work
+plot(x = combined_df$Salaries, y = combined_df$R,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$R ~ combined_df$Salaries), col='red')
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
 ```
 
 ## Team Total Spending
