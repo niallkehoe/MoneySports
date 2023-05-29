@@ -1,5 +1,5 @@
 ---
-title: "Stats 100: Project - EPL"
+title: "Stats 100: Project - NHL"
 author: "Niall Kehoe"
 date: "05/11/2023"
 header-includes:
@@ -39,9 +39,9 @@ NO ACKNOWLEDGEMENTS
 
 ```{r}
 
-poundToInteger <- function(amount) {
+dollarToInteger <- function(amount) {
   # Remove dollar sign and commas
-  amount <- gsub("\\£|,", "", amount)
+  amount <- gsub("\\$|,", "", amount)
   
   # Convert to integer
   amount <- as.integer(amount)
@@ -49,42 +49,51 @@ poundToInteger <- function(amount) {
   return(amount)
 }
 
+readInSalaries<- function(year) {
+  filename <- paste0("NHL/Salaries/NHL Salaries - ", year, ".csv")
+  salaries = read.csv(filename)
+  
+  salaries$Salaries = dollarToInteger(salaries$TOTAL) / 1000000
+  # salaries$Salaries = dollarToInteger(salaries$X2022.TOTAL.PAYROLL) / 1000000
+  
+  salaries$Team = convertNHLName(salaries$TEAM)
+  
+  return (salaries)
+}
+
 ```
 
 ```{r}
 
 
-convertEPLName <- function(name) {
-  new_name <- gsub("AFC ", "", name)
-  new_name <- gsub(" F.C.", "", new_name)
-  new_name <- gsub(" & Hove Albion", "", new_name)
-  new_name <- gsub("United", "Utd", new_name)
-  new_name <- gsub("Nottingham", "Nott'ham", new_name)
-  new_name <- gsub(" Hotspur", "", new_name)
-  new_name <- gsub("West Ham United", "West Ham", new_name)
-  new_name <- gsub("Wolverhampton Wanderers", "Wolves", new_name)
-  
+convertNHLName <- function(name) {
+  new_name <- gsub(" FC", "", name)
+  # new_name <- gsub(" United", " Utd", new_name)
+  # new_name <- gsub("é", "e", new_name)
+  # new_name <- gsub(" SC", "", new_name)
+  # new_name <- gsub("Houston ", "", new_name)
+  # new_name <- gsub("New York City", "NYCFC", new_name)
+  # new_name <- gsub("New England Revolution", "New England", new_name)
+  # new_name <- gsub("New York Red Bulls", "NY Red Bulls", new_name)
+  # new_name <- gsub("Philadelphia Union", "Philadelphia", new_name)
+  # new_name <- gsub("San Jose Earthquakes", "San Jose", new_name)
+  # 
+  # 
+  # new_name <- gsub("Seattle Sounders", "Seattle", new_name)
+  # new_name <- gsub("Sporting Kansas City", "Sporting KC", new_name)
+  # new_name <- gsub("Vancouver Whitecaps", "Vancouver", new_name)
+  # new_name <- gsub("Los Angeles Galaxy", "LA Galaxy", new_name)
+  # new_name <- gsub("San Jose Clash", "San Jose", new_name)
+  	
+
   return (new_name)
 }
 
-readInSalaries<- function(year) {
-  filename <- paste0("EPL/Salaries/EPL Salaries - ", year, ".csv")
-  salaries = read.csv(filename)
-  
-  salaries$Salaries = poundToInteger(salaries$TOTAL.SALARY) / 1000000
-  # salaries$Salaries = dollarToInteger(salaries$X2022.TOTAL.PAYROLL) / 1000000
-  
-  salaries$Team = convertEPLName(salaries$TEAM)
-  
-  return (salaries)
-}
-
 readInResults <- function(year) {
-  filename <- paste0("EPL/season/EPL - ", year, ".csv")
+  filename <- paste0("NHL/season/NHL Results - ", year, ".csv")
   data = read.csv(filename)
-  # data <- slice(data, 1:(n() - 2)) !!! EDIT
-  
-  
+  data$Squad = convertMLSName(data$Name)
+  # data <- slice(data, 1:(n() - 2))
   # data <- data[order(data$R,decreasing=TRUE),]
   # data <- data[order(data$TEAM,decreasing=FALSE),]
   data <- data[order(data$Squad), ]
@@ -97,10 +106,10 @@ readInResults <- function(year) {
 
   # Adding in more data over time, by normalising based on that years average
 
-  # merged_df <- merged_df[, -which(names(merged_df) == "Notes")]
-  merged_df <- merged_df[, !(names(merged_df) %in% c("Notes", "Last.5"))]
+  # merged_df <- merged_df[, !(names(merged_df) %in% c("Notes", "Last.5"))]
   
   # merged_df <- merged_df[, -which(names(merged_df) == "Last.5")]
+  
   # Drop NA values
   merged_df <- na.omit(merged_df)
   
@@ -108,27 +117,36 @@ readInResults <- function(year) {
   
   # Normalise Salaries - convert it to a z-score
   merged_df$Salaries.Norm = (merged_df$Salaries - mean(merged_df$Salaries)) / mean(merged_df$Salaries)
-  # merged_df$W.Norm = (merged_df$W - mean(merged_df$W)) / mean(merged_df$W)
+  merged_df$W.Norm = (merged_df$W - mean(merged_df$W)) / mean(merged_df$W)
+  merged_df$PTS.Norm = (merged_df$PTS - mean(merged_df$PTS)) / mean(merged_df$PTS)
 
   return(merged_df)
 }
 
-year = 2021
+year = 2022
 # mlb2021 = readInResults(year)
 
-epl2022 = readInResults(year)
-View(epl2022)
+nhl2022 = readInResults(year)
+View(nhl2022)
 
 
 ```
 
 ```{r}
-plot(x = epl2022$Salaries, y = epl2022$W,
+plot(x = nhl2022$Salaries, y = nhl2022$W,
    xlab = "Salaries (millions)",
    ylab = "Performance by Total Runs",	 
    main = "Salaries vs Performance"
 )
-abline(lm(epl2022$W ~ epl2022$Salaries), col='blue')
+abline(lm(nhl2022$W ~ nhl2022$Salaries), col='blue')
+
+plot(x = nhl2022$Salaries, y = nhl2022$PTS,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(nhl2022$PTS ~ nhl2022$Salaries), col='blue')
+
 ```
 
 ```{r}
@@ -146,10 +164,10 @@ abline(lm(epl2022$W ~ epl2022$Salaries), col='blue')
 ```{r}
 
 
-model1 = lm(W ~ Salaries, data = epl2022)
+model1 = lm(W ~ Salaries, data = nhl2022)
 summary(model1)
 
-model2 = lm(W ~ log(Salaries), data = epl2022)
+model2 = lm(PTS ~ Salaries, data = nhl2022)
 summary(model2)
 
 
@@ -173,22 +191,30 @@ summary(model2)
 
 ```{r}
 
-epl2022 = readInResults(2022)
-epl2021 = readInResults(2021)
-epl2020 = readInResults(2020)
-epl2019 = readInResults(2019)
-epl2018 = readInResults(2018)
-epl2017 = readInResults(2017)
+nhl2022 = readInResults(2022)
+nhl2021 = readInResults(2021)
+nhl2020 = readInResults(2020)
+nhl2019 = readInResults(2019)
+nhl2018 = readInResults(2018)
+nhl2017 = readInResults(2017)
+nhl2016 = readInResults(2016)
+nhl2015 = readInResults(2015)
+nhl2014 = readInResults(2014)
+nhl2013 = readInResults(2013)
 
 combined_df <- data.frame()
 
 # Add rows from df1, df2, and df3 to combined_df
-combined_df <- rbind(combined_df, epl2022)
-combined_df <- rbind(combined_df, epl2021)
-combined_df <- rbind(combined_df, epl2020)
-combined_df <- rbind(combined_df, epl2019)
-combined_df <- rbind(combined_df, epl2018)
-combined_df <- rbind(combined_df, epl2017)
+combined_df <- rbind(combined_df, nhl2022)
+combined_df <- rbind(combined_df, nhl2021)
+combined_df <- rbind(combined_df, nhl2020)
+combined_df <- rbind(combined_df, nhl2019)
+combined_df <- rbind(combined_df, nhl2018)
+combined_df <- rbind(combined_df, nhl2017)
+combined_df <- rbind(combined_df, nhl2016)
+combined_df <- rbind(combined_df, nhl2015)
+combined_df <- rbind(combined_df, nhl2014)
+combined_df <- rbind(combined_df, nhl2013)
 
 # Print the combined data frame
 View(combined_df)
@@ -199,7 +225,7 @@ View(combined_df)
 
 plot(x = combined_df$Salaries.Norm, y = combined_df$W,
    xlab = "Salaries (millions)",
-   ylab = "Performance by Total Runs",	 
+   ylab = "Performance by Wins",	 
    main = "Salaries vs Performance"
 )
 abline(lm(combined_df$W ~ combined_df$Salaries.Norm), col='red')
@@ -225,40 +251,42 @@ abline(lm(combined_df$W ~ combined_df$Salaries), col='red')
 
 ```{r}
 
-plot(x = combined_df$Salaries.Norm, y = combined_df$GF,
+plot(x = combined_df$Salaries.Norm, y = combined_df$W.Norm,
    xlab = "Salaries (millions)",
-   ylab = "Performance by Goals For",	 
+   ylab = "Performance by Win Normalised",	 
    main = "Salaries vs Performance"
 )
-abline(lm(combined_df$GF ~ combined_df$Salaries.Norm), col='red')
+abline(lm(combined_df$W.Norm ~ combined_df$Salaries.Norm), col='red')
 
 
-plot(x = combined_df$Salaries.Norm, y = combined_df$GA,
-   xlab = "Salaries (millions)",
-   ylab = "Performance by Goals Againts",	 
-   main = "Salaries vs Performance"
-)
-abline(lm(combined_df$GA ~ combined_df$Salaries.Norm), col='red')
-
-model = lm(GF ~ Salaries.Norm, data = combined_df)
-summary(model)
-model = lm(GA ~ Salaries.Norm, data = combined_df)
+model = lm(W.Norm ~ Salaries.Norm, data = combined_df)
 summary(model)
 ```
 
-## Points
-
 ```{r}
 
-plot(x = combined_df$Salaries.Norm, y = combined_df$Pts,
-   xlab = "Salaries (standardized)",
-   ylab = "Performance by Points",	 
+plot(x = combined_df$Salaries.Norm, y = combined_df$PTS,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
    main = "Salaries vs Performance"
 )
-abline(lm(combined_df$Pts ~ combined_df$Salaries.Norm), col='red')
+abline(lm(combined_df$PTS ~ combined_df$Salaries.Norm), col='red')
 
-model = lm(Pts ~ Salaries.Norm, data = combined_df)
+plot(x = combined_df$Salaries.Norm, y = combined_df$PTS.Norm,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Total Runs",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$PTS.Norm ~ combined_df$Salaries.Norm), col='red')
+
+
+
+model = lm(PTS ~ Salaries.Norm, data = combined_df)
 summary(model)
+model = lm(PTS.Norm ~ Salaries.Norm, data = combined_df)
+summary(model)
+
+
 ```
 
 ```{r}

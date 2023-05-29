@@ -238,15 +238,15 @@ abline(lm(combined_df$W ~ combined_df$Salaries), col='red')
 
 ```{r}
 
-plot(x = combined_df$Salaries.Norm, y = combined_df$WIN.,
+plot(x = combined_df$Salaries.Norm, y = combined_df$W.Norm,
    xlab = "Salaries (millions)",
-   ylab = "Performance by Win%",	 
+   ylab = "Performance by Win Normalised",	 
    main = "Salaries vs Performance"
 )
-abline(lm(combined_df$WIN. ~ combined_df$Salaries.Norm), col='red')
+abline(lm(combined_df$W.Norm ~ combined_df$Salaries.Norm), col='red')
 
 
-model = lm(WIN. ~ Salaries.Norm, data = combined_df)
+model = lm(W.Norm ~ Salaries.Norm, data = combined_df)
 summary(model)
 ```
 
@@ -262,16 +262,46 @@ summary(model)
 
 ```
 
-## Team Total Spending
+## Goals For / Against
 
 ```{r}
 
 
+plot(x = combined_df$Salaries.Norm, y = combined_df$GF,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Goals For",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$GF ~ combined_df$Salaries.Norm), col='red')
+
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$GA,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Goals Againts",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$GA ~ combined_df$Salaries.Norm), col='red')
+
+model = lm(GF ~ Salaries.Norm, data = combined_df)
+summary(model)
+model = lm(GA ~ Salaries.Norm, data = combined_df)
+summary(model)
 ```
 
+## Points
+
 ```{r}
 
 
+plot(x = combined_df$Salaries.Norm, y = combined_df$Pts,
+   xlab = "Salaries (standardized)",
+   ylab = "Performance by Goals Againts",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$Pts ~ combined_df$Salaries.Norm), col='red')
+
+model = lm(Pts ~ Salaries.Norm, data = combined_df)
+summary(model)
 ```
 
 ```{r}
