@@ -1,0 +1,315 @@
+---
+title: "Stats 100: Project - NHL"
+author: "Niall Kehoe"
+date: "05/11/2023"
+header-includes:
+   - \usepackage{bbm, amsmath,amsfonts,amsthm,amssymb,mathrsfs,amsxtra,amscd,latexsym, xcolor, graphicx, fvextra}
+   - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+output: pdf_document
+---
+
+\newcommand{\Var}{\mathrm{Var}}
+
+```{r}
+suppressPackageStartupMessages(library(knitr)) #makes pdfs
+suppressPackageStartupMessages(library(latex2exp))
+suppressPackageStartupMessages(library(ggplot2)) #makes nice plots
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(glmnet))
+suppressPackageStartupMessages(library(predtools))
+suppressPackageStartupMessages(library(psych))
+knitr::opts_chunk$set(echo = TRUE)
+
+# Checks if package is installed, installs if necessary, and loads package for current session
+
+pacman::p_load(
+  lubridate,  # general package for handling and converting dates  
+  parsedate,   # has function to "guess" messy dates
+  aweek,      # another option for converting dates to weeks, and weeks to dates
+  zoo,        # additional date/time functions
+  tidyverse,  # data management and visualization  
+  rio)        # data import/export
+```
+
+# Acknowledgements
+
+NO ACKNOWLEDGEMENTS
+
+# EPL
+
+```{r}
+
+dollarToInteger <- function(amount) {
+  # Remove dollar sign and commas
+  amount <- gsub("\\$|,", "", amount)
+  
+  # Convert to integer
+  amount <- as.integer(amount)
+  
+  return(amount)
+}
+
+readInSalaries<- function(year) {
+  filename <- paste0("WNBA/Salaries/WNBA Salaries - ", year, ".csv")
+  salaries = read.csv(filename)
+  
+  salaries$Salaries = dollarToInteger(salaries$TOTAL.CASH) / 1000000
+  # salaries$Salaries = dollarToInteger(salaries$X2022.TOTAL.PAYROLL) / 1000000
+  
+  salaries$Team = convertWNBAName(salaries$TEAM)
+  
+  return (salaries)
+}
+
+```
+
+```{r}
+
+
+convertWNBAName <- function(name) {
+  new_name <- gsub("\\*", "", name)
+  return (new_name)
+}
+
+readInResults <- function(year) {
+  filename <- paste0("WNBA/season/WNBA Results - ", year, ".csv")
+  data = read.csv(filename)
+  data$Squad = convertWNBAName(data$Team)
+  data <- data[order(data$Squad), ]
+
+  salaries = readInSalaries(year)
+
+  # Merge based on 'Team' and 'Tm' columns
+  merged_df <- merge(data, salaries, by.x = "Squad", by.y = "Team", all = TRUE)
+
+  # Adding in more data over time, by normalising based on that years average
+
+  # merged_df <- merged_df[, !(names(merged_df) %in% c("Notes", "Last.5"))]
+  
+  # Drop NA values
+  merged_df <- na.omit(merged_df)
+  
+  merged_df$Squad = paste0(merged_df$Squad, "-", year)
+  
+  # Normalise Salaries - convert it to a z-score
+  merged_df$Salaries.Norm = (merged_df$Salaries - mean(merged_df$Salaries)) / mean(merged_df$Salaries)
+  merged_df$W.Norm = (merged_df$W - mean(merged_df$W)) / mean(merged_df$W)
+  merged_df$W. = merged_df$W.L.
+  merged_df$W.Norm = (merged_df$W. - mean(merged_df$W.)) / mean(merged_df$W.)
+
+  return(merged_df)
+}
+
+year = 2022
+# mlb2021 = readInResults(year)
+
+wnba2022 = readInResults(year)
+View(wnba2022)
+
+
+```
+
+```{r}
+plot(x = wnba2022$Salaries, y = wnba2022$W,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Wins",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(wnba2022$W ~ wnba2022$Salaries), col='blue')
+
+plot(x = wnba2022$Salaries, y = wnba2022$W.,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Win %",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(wnba2022$W. ~ wnba2022$Salaries), col='blue')
+
+```
+
+```{r}
+
+# plot(x = log(merged_df_2022$Salaries), y = merged_df_2022$W,
+#    xlab = "Salaries (millions)",
+#    ylab = "Performance by Total Runs",	 
+#    main = "log(Salaries) vs Performance"
+# )
+# abline(lm(merged_df_2022$W ~ log(merged_df_2022$Salaries)), col='blue')
+```
+
+```{r}
+
+
+model1 = lm(W ~ Salaries, data = wnba2022)
+summary(model1)
+
+model2 = lm(W. ~ Salaries, data = wnba2022)
+summary(model2)
+
+
+```
+
+```{r}
+
+
+
+```
+
+```{r}
+
+# plot(x = mlb2021$Salaries.Norm, y = mlb2021$R.Norm,
+#    xlab = "Salaries (millions)",
+#    ylab = "Performance by Total Runs",	 
+#    main = "Salaries vs Performance"
+# )
+# abline(lm(mlb2021$R.Norm ~ mlb2021$Salaries.Norm), col='red')
+```
+
+```{r}
+
+wnba2022 = readInResults(2022)
+wnba2021 = readInResults(2021)
+wnba2020 = readInResults(2020)
+wnba2019 = readInResults(2019)
+wnba2018 = readInResults(2018)
+wnba2017 = readInResults(2017)
+
+combined_df <- data.frame()
+
+# Add rows from df1, df2, and df3 to combined_df
+combined_df <- rbind(combined_df, wnba2022)
+combined_df <- rbind(combined_df, wnba2021)
+combined_df <- rbind(combined_df, wnba2020)
+combined_df <- rbind(combined_df, wnba2019)
+combined_df <- rbind(combined_df, wnba2018)
+combined_df <- rbind(combined_df, wnba2017)
+
+# Print the combined data frame
+View(combined_df)
+```
+
+```{r}
+
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$W,
+   xlab = "Salaries (standardized)",
+   ylab = "Performance by Wins",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$W ~ combined_df$Salaries.Norm), col='red')
+```
+
+```{r}
+
+model = lm(W ~ Salaries.Norm, data = combined_df)
+summary(model)
+```
+
+```{r}
+
+
+# must exclude covid year for this to work
+plot(x = combined_df$Salaries, y = combined_df$W,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Wins",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$W ~ combined_df$Salaries), col='red')
+```
+
+```{r}
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$W.Norm,
+   xlab = "Salaries (standardizing)",
+   ylab = "Performance by Win Normalised",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$W.Norm ~ combined_df$Salaries.Norm), col='red')
+
+
+model = lm(W.Norm ~ Salaries.Norm, data = combined_df)
+summary(model)
+```
+
+```{r}
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$W.,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Win %",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$W. ~ combined_df$Salaries.Norm), col='red')
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$W.Norm,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Win % standardized",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$W.Norm ~ combined_df$Salaries.Norm), col='red')
+
+
+
+model = lm(W ~ Salaries.Norm, data = combined_df)
+summary(model)
+model = lm(W.Norm ~ Salaries.Norm, data = combined_df)
+summary(model)
+
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+## Team Total Spending
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
