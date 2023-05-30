@@ -1,5 +1,5 @@
 ---
-title: "Stats 100: Homework 3"
+title: "Stats 100: Project"
 author: "Niall Kehoe"
 date: "05/11/2023"
 header-includes:

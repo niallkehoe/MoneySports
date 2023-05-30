@@ -35,7 +35,7 @@ pacman::p_load(
 
 NO ACKNOWLEDGEMENTS
 
-# EPL
+# MLS
 
 ```{r}
 
@@ -252,6 +252,19 @@ summary(model)
 
 ```{r}
 
+combined_df$WIN. = combined_df$W / combined_df$MP
+combined_df$WIN.Norm = (combined_df$WIN. - mean(combined_df$WIN.)) / mean(combined_df$WIN.)
+
+plot(x = combined_df$Salaries.Norm, y = combined_df$WIN.Norm,
+   xlab = "Salaries (millions)",
+   ylab = "Performance by Win%",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$WIN.Norm ~ combined_df$Salaries.Norm), col='red')
+
+
+model = lm(WIN.Norm ~ Salaries.Norm, data = combined_df)
+summary(model)
 ```
 
 ```{r}
@@ -306,10 +319,29 @@ summary(model)
 
 ```{r}
 
+plot(x = combined_df$Salaries, y = combined_df$W,
+   xlab = "Salaries (standardized)",
+   ylab = "Performance by Points",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$W ~ combined_df$Salaries), col='red')
+
+model = lm(W ~ Salaries, data = combined_df)
+summary(model)
 ```
 
 ```{r}
 
+plot(x = combined_df$Salaries.Norm, y = combined_df$WIN.Norm,
+   xlab = "Salaries (standardized)",
+   ylab = "Performance by Win% (standardized)",	 
+   main = "Salaries vs Performance"
+)
+abline(lm(combined_df$WIN.Norm ~ combined_df$Salaries.Norm), col='red')
+
+
+model = lm(WIN.Norm ~ Salaries.Norm, data = combined_df)
+summary(model)
 ```
 
 ```{r}
